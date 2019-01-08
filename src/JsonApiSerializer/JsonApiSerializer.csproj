@@ -12,9 +12,6 @@
     <AssemblyVersion>1.6.1.0</AssemblyVersion>
     <FileVersion>1.6.1.0</FileVersion>
     <PackageReleaseNotes></PackageReleaseNotes>
-    <SignAssembly>false</SignAssembly>
-    <AssemblyOriginatorKeyFile>testsigntest.pfx</AssemblyOriginatorKeyFile>
-    <DelaySign>false</DelaySign>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
   </PropertyGroup>
   <ItemGroup>
