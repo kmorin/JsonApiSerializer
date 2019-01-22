@@ -1,13 +1,12 @@
-﻿using JsonApiSerializer.Exceptions;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using JsonApiSerializer.Exceptions;
 using JsonApiSerializer.JsonApi.WellKnown;
 using JsonApiSerializer.JsonConverters;
 using JsonApiSerializer.SerializationState;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text.RegularExpressions;
 
 namespace JsonApiSerializer.Util
 {
@@ -23,7 +22,7 @@ namespace JsonApiSerializer.Util
             var lookAheadReader = reader.Fork();
             string id = null;
             string type = null;
-            foreach (var propName in ReaderUtil.IterateProperties(lookAheadReader))
+            foreach (var propName in IterateProperties(lookAheadReader))
             {
                 if (propName == PropertyNames.Id)
                 {
@@ -76,17 +75,16 @@ namespace JsonApiSerializer.Util
                       $"Expected to find json object at path '{path}'",
                       $"The value of the '{propName}' key MUST be an object");
                 }
-                else if (reader.TokenType == JsonToken.StartArray)
+
+                if (reader.TokenType == JsonToken.StartArray)
                 {
                     //we have an object rather than an array. Usually occurs if the class model doesnt match the json format
                     throw new JsonApiFormatException(path,
-                      $"Expected to find json object at path '{path}' but found an array. This json property needs to be deserialized into a list like object");
+                        $"Expected to find json object at path '{path}' but found an array. This json property needs to be deserialized into a list like object");
                 }
-                else
-                {
-                    throw new JsonApiFormatException(path,
-                     $"Expected to find json object at path '{path}' but found '{reader.Value}'");
-                }
+
+                throw new JsonApiFormatException(path,
+                    $"Expected to find json object at path '{path}' but found '{reader.Value}'");
             }
 
             reader.Read();
@@ -129,6 +127,7 @@ namespace JsonApiSerializer.Util
         /// <param name="obj"></param>
         /// <param name="property"></param>
         /// <param name="value"></param>
+        /// <param name="overrideConverter"></param>
         /// <returns><c>True</c> if the property could be set otherwise <c>false</c></returns>
         public static bool TryPopulateProperty(JsonSerializer serializer, object obj, JsonProperty property, JsonReader value, JsonConverter overrideConverter = null)
         {
@@ -142,9 +141,9 @@ namespace JsonApiSerializer.Util
             {
                 propValue = overrideConverter.ReadJson(value, property.PropertyType, null, serializer);
             }
-            else if (property.MemberConverter != null && property.MemberConverter.CanRead)
+            else if (property.Converter != null && property.Converter.CanRead)
             {
-                propValue = property.MemberConverter.ReadJson(value, property.PropertyType, null, serializer);
+                propValue = property.Converter.ReadJson(value, property.PropertyType, null, serializer);
             }
             else
             {
@@ -176,7 +175,6 @@ namespace JsonApiSerializer.Util
             else if (reader.TokenType == JsonToken.None || reader.TokenType == JsonToken.Null || reader.TokenType == JsonToken.Undefined)
             {
                 //we dont have a value so return empty array
-                yield break;
             }
             else
             {
@@ -204,9 +202,6 @@ namespace JsonApiSerializer.Util
                         if (reader.Path == startPath)
                             throw new JsonApiFormatException(startPath, $"Expected to find nested object within {startPath} that matches \\{pathEndsWith}\\");
                         break;
-                    default:
-                        break;
-
                 }
             } while (reader.Read());
 
@@ -233,9 +228,6 @@ namespace JsonApiSerializer.Util
                         if (reader.Path == path)
                             return;
                         break;
-                    default:
-                        break;
-
                 }
             } while (reader.Read());
 
